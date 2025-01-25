@@ -206,14 +206,12 @@ public class LinkedList {
 	 * A textual representation of this list, for debugging.
 	 */
 	public String toString() {
+        ListIterator itr=this.iterator();
 		String str="";
-		if(size==0){
-			return "[]";
-		}Node currrent=this.first;
-		for(int i=0;i<size;i++){
-			str+=" [" + currrent.block + "] " ;
-			currrent=currrent.next;
-		}
+	while (itr.hasNext()){
+        str+="(" + itr.current.block.baseAddress + " , " + itr.current.block.length + ")";
+        itr.next();
+    }
 		return str;
 	}
 }
