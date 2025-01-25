@@ -61,26 +61,28 @@ public class MemorySpace {
 		if(length<=0){
 			return -1;
 		}
-		for(int i=0;i<freeList.getSize();i++){
-			Node current=freeList.getNode(i);
-			MemoryBlock freeBlock=current.block;
-			if(freeBlock.length>=length){
-				int x=freeBlock.baseAddress;
-				if(freeBlock.length==length){
-					freeList.remove(i);
-					allocatedList.addLast(new MemoryBlock(x, length));
+		Node current=freeList.getFirst();
+		while(current!=null){
+			MemoryBlock freeblock=current.block;
+			if(freeblock.length>=length){
+				if(freeblock.length==length){
+					freeList.remove(current.block);
+					allocatedList.addLast(new MemoryBlock(freeblock.baseAddress, freeblock.length));
+					return freeblock.baseAddress;
+				}else{
+					MemoryBlock allocatedblock= new MemoryBlock(freeblock.baseAddress, length);
+					allocatedList.addLast(allocatedblock);
+					freeblock.baseAddress+=length;
+					freeblock.length-=length;
+					return allocatedblock.baseAddress;
 				}
-				else{
-					freeBlock.baseAddress+=length;
-					freeBlock.length-=length;
-					MemoryBlock yBlock=new MemoryBlock(x, length);
-					allocatedList.addLast(yBlock);
-				}
-				return x;
 			}
+			current=current.next;
 		}
 		return -1;
-	}
+		}
+		
+	
 
 	/**
 	 * Frees the memory block whose base address equals the given address.
@@ -91,16 +93,24 @@ public class MemorySpace {
 	 *            the starting address of the block to freeList
 	 */
 	public void free(int address) {
-		for(int i=0;i<allocatedList.getSize();i++){
-			Node current=allocatedList.getNode(i);
-			MemoryBlock block=current.block;
-			int x=block.baseAddress;
-			if(x==address){
-				allocatedList.remove(block);
-				freeList.addLast(block);
+		if(allocatedList.getSize()==0){
+			throw new IllegalArgumentException("index must be between 0 and size");
+		}
+		Node current=allocatedList.getFirst();
+		Node blockk=null;
+		while(current!=null){
+			if(current.block.baseAddress==address){
+				blockk=current;
 				break;
 			}
-	}
+			current=current.next;
+		}
+		if(blockk==null){
+			return;
+		}
+allocatedList.remove(blockk.block);
+	freeList.addLast(blockk.block);
+
 }
 	
 	/**
@@ -117,20 +127,31 @@ public class MemorySpace {
 	 * In this implementation Malloc does not call defrag.
 	 */
 	public void defrag() {
-		int i=0;
-		while(i<freeList.getSize()-1){
-			Node current= freeList.getNode(i);
-			Node nextnode=freeList.getNode(i+1);
-			MemoryBlock curblock=current.block;
-			MemoryBlock nextblock=nextnode.block;
-			if(nextblock.baseAddress==curblock.baseAddress+curblock.length){
-				curblock.length+=nextblock.length;
-				freeList.remove(nextnode);
-			} else{	i++;
+		Node current=freeList.getFirst();
+		boolean flag=true;
+		boolean flag2=true;
+		while(current!=null){
+			Node run= freeList.getFirst();
+			while(run!=null){
+				if(current.block.baseAddress+current.block.length==run.block.baseAddress){
+					current.block.length+=run.block.length;
+					Node nerm=run;
+					run=run.next;
+					freeList.remove(nerm.block);
+					flag=false;
+					flag2=false;
+				}
+				if(flag2){
+					run=run.next;
+				}
+				flag2=true;
 			}
-		}
-
+			if(flag){
+				current=current.next;
 			}
+			flag=true;
 		}
+		}
+}
 	
 
